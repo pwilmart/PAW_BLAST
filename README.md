@@ -1,7 +1,13 @@
 # PAW_BLAST
 A utility for blasting one protein FASTA file (queries) against another (targets) to find orthologs.
 
-**What is this and why would I use it:**
+Requires Python3 and a local installation of BLAST from NCBI.
+
+### 20190619 - Minor update added some additional columns to the output table.
+
+Added more columns with BLAST data so that more extensive table filtering can be done. This can be useful when trying to add as many ortholog annotations as possible. Adding annotations to FASTA files in one of the more common uses of this utility.
+
+## What is this and why would I use it:
 This compares protein sequences from one FASTA protein database against another. It determines the reciprocal best matches (a basic ortholog definition). It uses a downloaded local installation of the NCBI BLAST program. A tab-delimited text file of the matches is written to disk.
 
 There are many uses of such a tool. The concept is to take a list of identified proteins from a proteomics experiment and create a subset FASTA file with just those sequences. The second FASTA database can be several things: identifications from another proteomics experiment (example: compare mouse eye lens proteins to human eye lens proteins), a better annotated related proteome (example: Leshmainia donovani IDs versus Leshmania infantum reference proteome), a reference proteome for a high quality model system (example: rat identifications versus a mouse Swiss-Prot reference proteome), a set of sequences from another publication (assuming that protein sequences (not accessions) can be obtained).
