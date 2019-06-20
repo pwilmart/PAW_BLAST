@@ -6,13 +6,14 @@ Written by Phil Wilmarth, OHSU, 2009-2016.
 """
 import os
 import sys
-from xml.sax.handler import ContentHandler
+import copy
 import math
-#
-#
-#===============================================================
+import subprocess
+import xml.sax
+from xml.sax.handler import ContentHandler
+
+
 def get_file(default_location, extension_list, title_string=""):
-#===============================================================
     """Dialog box to browse to a file.  Returns full file name.
 
     Usage: full_file_name = get_file(default_location, extension_list, [title]),
@@ -24,36 +25,26 @@ def get_file(default_location, extension_list, title_string=""):
 
     Written by Phil Wilmarth, OHSU, 2008.
     """
-    import os
     import tkinter
     from tkinter import filedialog
-    #
+    
     # set up GUI elements
-    #
     root = tkinter.Tk()
     root.withdraw()
-    #
+    
     # set default title string if not passed
-    #
     if title_string == "":   
         title_string = 'Select a single FILE'
-    #
+    
     # create dialog box for file selection
-    #
     root.update()
     filename = filedialog.askopenfilename(parent=root, initialdir=default_location,
                                           filetypes=extension_list, title=title_string)
-    #
     # return full filename
-    #
     return filename   
-    #
-    # end
-    #
-#
-# data structure for general Blast information (version, parameters, etc.)
-#
+
 class Blast_header:
+    """Data container for general Blast information (version, parameters, etc.)."""
     def __init__(self):
         self.program = ''
         self.version = ''
@@ -70,10 +61,9 @@ class Blast_header:
         self.hit_kappa = 0.0
         self.hit_lambda = 0.0
         self.hit_entropy = 0.0
-#
-# data structure for query information
-#
+
 class Blast_query:
+    """Data container for query information."""
     def __init__(self):
         self.num = 0
         self.id = ''
@@ -81,10 +71,9 @@ class Blast_query:
         self.len = 0
         self.hits = []
         self.status = None
-#
-# data structure for hit information
-#
+
 class Blast_hit:
+    """Data container for hit information."""
     def __init__(self):
         self.num = 0
         self.id = ''
@@ -92,10 +81,9 @@ class Blast_hit:
         self.accession = 0
         self.len = 0
         self.hit_hsps = []
-#
-# data structure for hsp information
-#
+
 class Blast_hsp:
+    """Data container for hsp information."""
     def __init__(self):
         self.num = 0
         self.bit_score = 0.0
@@ -116,16 +104,11 @@ class Blast_hsp:
         self.query_seq = ''
         self.hit_seq = ''
         self.midline = ''
-#
-# simple content handler object for BLAST xml output
-#
+
 class SimpleHandler(ContentHandler):
-    """Bare bones content handler object
-    """
+    """Simple content handler object for BLAST xml output."""
     def __init__(self):
-        #
-        # atrributes
-        #
+        """Define atrributes."""
         self.inHeader = False
         self.inQuery = False
         self.inHit = False
@@ -139,9 +122,7 @@ class SimpleHandler(ContentHandler):
         self.last_name = ''
     
     def startElement(self, name, attrs):
-        #
-        # set state via flags as tags are encountered
-        #
+        """Sets state via flags as tags are encountered."""
 ##        print('...start: ', name)
         if name == 'BlastOutput':
             self.inHeader = True
@@ -169,17 +150,13 @@ class SimpleHandler(ContentHandler):
             pass
 
     def characters(self, chars):
-        #
-        # capture text for the desired tags
-        #
+        """Capture text for the desired tags."""
         if self.get_chars:
             self.buff += chars
 
     def endElement(self, name):
+        """Save the desired XML elements into data structures."""
 ##        print('...end: ', name)
-        #
-        # save the desired XML elements into data structures
-        #
         if name == 'Parameters':
             self.inHeader = False
         elif name == 'Iteration':
@@ -192,9 +169,8 @@ class SimpleHandler(ContentHandler):
             self.inHsp = False
         elif name == 'Statistics':
             self.inStats = False
-        #
+        
         # header elements
-        #
         elif name == 'BlastOutput_program':
             self.header.program = self.buff
         elif name == 'BlastOutput_version':
@@ -209,9 +185,8 @@ class SimpleHandler(ContentHandler):
             self.header.gap_open = float(self.buff)
         elif name == 'Parameters_gap-extend':
             self.header.gap_extend = float(self.buff)        
-        #
+        
         # Query elements
-        #
         elif name == 'Iteration_iter-num':
             self.queries[-1].num = int(self.buff)
         elif name == 'Iteration_query-ID':
@@ -220,9 +195,8 @@ class SimpleHandler(ContentHandler):
             self.queries[-1].desc = self.buff
         elif name == 'Iteration_query-len':
             self.queries[-1].len = int(self.buff)
-        #
+        
         # Hit elements
-        #
         elif name == 'Hit_num':
             self.queries[-1].hits[-1].num = int(self.buff)
         elif name == 'Hit_id':
@@ -233,9 +207,8 @@ class SimpleHandler(ContentHandler):
             self.queries[-1].hits[-1].accession = self.buff
         elif name == 'Hit_len':
             self.queries[-1].hits[-1].len = int(self.buff)
-        #
+        
         # Hit hsp elements
-        #
         elif name == 'Hsp_num':
             self.queries[-1].hits[-1].hit_hsps[-1].num = int(self.buff)
         elif name == 'Hsp_bit-score':
@@ -283,21 +256,21 @@ class SimpleHandler(ContentHandler):
             self.header.hit_lambda = float(self.buff)
         elif name == 'Statistics_entropy':
             self.header.hit_entropy= float(self.buff)            
-        #
+        
         else:
             pass
-    #            
+                
     # end SimpleHandler class
-    #
 
 class Blast_results:
-    """Place holder class for parsed BLAST xml results.
-    """
+    """Place holder class for parsed BLAST xml results."""
     def __init__(self):
+        """Basic constructor with attributes."""
         self.header = None
         self.queries = None
 
     def snoop(self):
+        """Diagnostic print method."""
         print('Blast program:', self.header.program)
         print('program version:', self.header.version)
         print('Blast reference:', self.header.reference)
@@ -316,6 +289,7 @@ class Blast_results:
         print('number of query calls:', len(self.queries))
 
     def print_top_hits(self, out=None):
+        """Prints top hit summaries to console or file."""
         print('\nProtein to Protein Blast Summary:\n', file=out)
         counter = 0
         for query in self.queries:
@@ -336,14 +310,18 @@ class Blast_results:
         return(counter)
     
     def print_top_hits_tabs(self, out=None):
-        print('\nTab-delimited Protein to Protein Blast Summary:\n', file=out)
+        """Prints ortholog information to tab-delimieted text file."""
+        print('Tab-delimited Protein to Protein Blast Summary:', file=out)
         print('Query database:', self.header.query_db, file=out)
         print('Hit database:', self.header.hit_db, file=out)
-        print('\nquery_number\tquery_acc\tquery_desc\thit_acc\thit_desc\tblast_scores\tstatus', file=out)
+        headers = ['query_number', 'query_acc', 'query_desc', 'hit_acc', 'hit_desc',
+                   'blast_scores', 'match_status', 'query_aa', 'hit_aa', 'alignment_aa',
+                   'identity_aa', 'positive_aa', 'pc_identity', 'pc_postive', 'bit_score']
+        print('\n', '\t'.join(headers), file=out)
         counter = 0
         for query in self.queries:
             query_acc = query.desc.split()[0]
-            query_desc = query.desc[len(query_acc):]
+            query_desc = query.desc[len(query_acc)+1:]
             try:
                 h = query.hits[0]
                 hsp = h.hit_hsps[0]
@@ -352,26 +330,31 @@ class Blast_results:
                 blast_scores = ('ident:%d/%d pos:%d/%d query:%d hit:%d align:%d bit:%0.1f' %
                                 (hsp.identity, query.len, hsp.positive, query.len, query.len,
                                  h.len, hsp.align_len, hsp.bit_score))
-                string = '%s\t%s\t%s\t%s\t%s\t%s\t%s' % (query.num, query_acc, query_desc,
-                                                         hit_acc, hit_desc, blast_scores, query.status)
+                row_values = (query.num, query_acc, query_desc, hit_acc, hit_desc, blast_scores,
+                              query.status, query.len, h.len, hsp.align_len, hsp.identity, hsp.positive,
+                              100*hsp.identity/query.len, 100*hsp.positive/query.len, hsp.bit_score)
+                row_format = '\t'.join(['%d', '%s', '%s', '%s', '%s', '%s',
+                                        '%s', '%d', '%d', '%d', '%d', '%d',
+                                        '%0.1f', '%0.1f', '%0.1f'])
+                string = row_format % row_values
                 print(string, file=out)
                 if query.status == 'Poor_match' or query.status == 'Partial_match':
                     counter += 1
             except IndexError:
                 counter += 1
-                string = '%s\t%s\t%s\tNo_match\tNA\tNA\tNo_match' % (query.num, query_acc, query_desc)
+                string = '%s\t%s\t%s\tNo_match\tNA\tNA\tNo_match\t\t\t\t\t\t\t\t' % (query.num, query_acc, query_desc)
                 print(string, file=out)
         return(counter)
                
     def test_top_hits(self, score, cutoff):
+        """Determines the match status for top hits."""
         for query in self.queries:            
             try:
                 h = query.hits[0]
                 hsp = h.hit_hsps[0]
                 query.status = 'OK'
-                #
+                
                 # eliminate fragments
-                #
                 if (hsp.hit_end - hsp.hit_start)/float(h.len) < 0.5:
                     query.status = 'Partial_match_hit'
                 if (hsp.query_end - hsp.query_start)/float(query.len) < 0.5:
@@ -397,15 +380,17 @@ class Blast_results:
         return
 
     def calc_percentage(self):
+        """Calculates alignment percentage values for queries."""
         for query in self.queries:
             try:
                 hsp = query.hits[0].hit_hsps[0]
-                self.ident_pc = 100.0*float(hsp.identity)/float(query.len)
-                self.pos_pc = 100.0*float(hsp.positive)/float(query.len)
+                self.ident_pc = 100.0 * hsp.identity / query.len
+                self.pos_pc = 100.0 * hsp.positive / query.len
             except IndexError:
                 pass
 
     def calc_ave_match(self, score):
+        """Determines the average match score for the set of queries."""
         quant = []
         for query in self.queries:
             try:
@@ -427,7 +412,7 @@ class Blast_results:
                         pass
             except IndexError:
                 pass
-        #
+        
         mean = sum(quant) / float(len(quant))
         try:
             stdev = sum([(float(x)-mean)**2 for x in quant]) / (float(len(quant))-1)
@@ -438,24 +423,19 @@ class Blast_results:
                   'b':'bit_score', 'e':'log10_evalue'}
 ##        print('\n%s had a mean of %0.3f and stdev of %0.3f\n' % (lookup[score], mean, stdev))
         return(mean, stdev)
-    #
+    
     # end Blast_results class
-    #
 
 def better_match_check(results):
-    """Flags matches if another protein is a better match
+    """Flags matches if another protein is a better match."""
 
-    written by Phil Wilmarth, OHSU, 2009.
-    """
-    #
     # build dictionary of best bit scores and accessions for the hit sequences
-    #
     best_score = {}
     for q in results.queries:
         try:
             h = q.hits[0] # top hit
             h_acc = h.desc.split()[0]
-#            hit_desc = h.desc[len(hit_acc):]            
+##            hit_desc = h.desc[len(hit_acc):]            
             value = (h.hit_hsps[0].bit_score, h_acc)
             if h_acc in best_score:
                 if best_score[h_acc][0] < value[0]:
@@ -464,7 +444,7 @@ def better_match_check(results):
                 best_score[h_acc] = value
         except IndexError:
             pass
-    #
+    
     for q in results.queries:
         try:
             h = q.hits[0]
@@ -473,26 +453,20 @@ def better_match_check(results):
                 q.status = 'Better_match to %s' % best_score[h_acc][1]
         except IndexError:
             pass
-#        
+       
 #==============================================================        
 # MAIN program to call local copy of blastp
 # user supplies a local BLAST database path and
 # a query sequence in FASTA format (supplied via stdin stream).
 # XML output is captured, parsed, and saved in content handler.
 #==============================================================        
-#
-import subprocess
-import xml.sax
-import copy
-#
+
 # print program information
-#
 print('\n=====================================================================')
 print(' program "db_to_db_blaster.py", v1.1, Phil Wilmarth, OHSU, 2011, 2017')
 print('=====================================================================')
-#
+
 # test platform and set the BLAST program path
-#
 if sys.platform == 'win32':
     blast_path = r'C:\Program Files\NCBI\blast-2.2.30+\bin'
 else:
@@ -502,14 +476,13 @@ if not os.path.exists(blast_path):
     print('...BLAST path was set to:', blast_path)
     print('...Aborting program. Please change "blast_path" and re-launch')
     sys.exit()
-#
+
 # get the two PAW results databases to blast against each other
-#
 if os.path.exists(r'C:\Xcalibur\database'):
     default = r'C:\Xcalibur\database'
 else:
     default = os.getcwd()
-#
+
 print('Select first FASTA file')
 first_db = get_file(default, [('FASTA files', '*.fasta')],\
                                 'Select first database')
@@ -519,19 +492,16 @@ print('Select the second FASTA file')
 second_db = get_file(default, [('FASTA files', '*.fasta')],\
                                 'Select second database')
 if not second_db: sys.exit()    # cancel button was hit
-#
+
 # echo database names to console output
-#
 print('Query database:', os.path.basename(first_db))
 print('Hit database:', os.path.basename(second_db))
 print('Results files will be in:', os.path.dirname(first_db))
-#
+
 # create a data structure to hold the results
-#
 results = Blast_results()
-#
+
 # make the BLAST databases if they don't exist
-#
 for db in [first_db, second_db]:
     make_db = False
     for ext in ['.phr', '.pin', '.psq']:
@@ -543,15 +513,13 @@ for db in [first_db, second_db]:
         print('Command line:', command)
         p = subprocess.call(command)
         print('Formatting %s as BLAST database' % (os.path.basename(db),))
-#
+
 # launch the local BLAST run
-#
 i = 0
 query = first_db
 hit = second_db
-#
+
 # make the Blast command line and launch subprocess
-#
 out_name = os.path.join(os.path.dirname(query),
                         os.path.basename(query)+'_vs_'+
                         os.path.basename(hit)+'.xml')
@@ -588,9 +556,8 @@ else:
 ##out_obj.close()
 ##os.remove(temp_name)
 ############################################################################
-#
+
 # set up to parse the XML output.  Content handler holds the BLAST results
-#
 print('Starting XML results file parsing (may take a few minutes)...')
 out_obj = open(out_name, 'r')
 ch = SimpleHandler()
@@ -603,15 +570,13 @@ saxparser.setFeature(xml.sax.handler.feature_namespaces, 0)
 saxparser.setFeature(xml.sax.handler.feature_external_pes, 0)
 saxparser.setFeature(xml.sax.handler.feature_external_ges, 0)
 saxparser.parse(out_name)
-#
+
 # save the results before the next iteration
-#
 results.header = copy.deepcopy(ch.header)
 results.queries = copy.deepcopy(ch.queries)
 better_match_check(results)
-#
+
 # do something with the results next
-#
 result_file = out_name.replace('.xml', '.txt')
 out = open(result_file, 'w')
 score = 'i'
@@ -627,6 +592,5 @@ print('Identity cutoff for OK was %0.2f%%' % cutoff, file=out)
 print(len(results.queries), 'proteins processed.', file=out)
 out.close()
 print(len(results.queries), 'proteins processed.')
-#
+
 # end
-#
