@@ -317,7 +317,8 @@ class Blast_results:
         headers = ['query_number', 'query_acc', 'query_desc', 'hit_acc', 'hit_desc',
                    'blast_scores', 'match_status', 'query_aa', 'hit_aa', 'alignment_aa',
                    'identity_aa', 'positive_aa', 'pc_identity', 'pc_postive', 'bit_score']
-        print('\n', '\t'.join(headers), file=out)
+        print('\n', file=out)
+        print('\t'.join(headers), file=out)
         counter = 0
         for query in self.queries:
             query_acc = query.desc.split()[0]
