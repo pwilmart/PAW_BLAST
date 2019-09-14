@@ -36,7 +36,7 @@ print('=======================================================')
 print('Processing accessions file:', time.ctime())
 IDs = {}
 read = 0
-for acc in open(list_file_name, 'rU'):
+for acc in open(list_file_name, 'r'):
     try:
         acc = acc.split()[0]    # remove additional match numbers
     except IndexError:

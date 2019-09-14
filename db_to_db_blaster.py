@@ -2,16 +2,55 @@
 databases against other small databases.  Caputures XML output and
 parses the information.
 
+MIT License
+
+Copyright (c) 2018 Phillip Wilmarth
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
 Written by Phil Wilmarth, OHSU, 2009-2016.
+
+change log:
+20190913 - moved BLAST path tests to top of source -PW
 """
 import os
 import sys
+import platform
 import copy
 import math
 import subprocess
 import xml.sax
 from xml.sax.handler import ContentHandler
 
+################################################
+# test platform and set the BLAST program path #
+################################################
+if platform.system() == 'Windows':
+    blast_path = r'C:\Program Files\NCBI\blast-2.9.0+\bin'
+else:
+    blast_path = r'/usr/local/ncbi/blast/bin'
+    
+if not os.path.exists(blast_path):
+    print('\nWARNING: BLAST path is not set correctly for this computer')
+    print('...BLAST path was set to:', blast_path)
+    print('...Aborting program. Please change "blast_path" and re-launch')
+    sys.exit()
 
 def get_file(default_location, extension_list, title_string=""):
     """Dialog box to browse to a file.  Returns full file name.
@@ -467,17 +506,6 @@ print('\n=====================================================================')
 print(' program "db_to_db_blaster.py", v1.1, Phil Wilmarth, OHSU, 2011, 2017')
 print('=====================================================================')
 
-# test platform and set the BLAST program path
-if sys.platform == 'win32':
-    blast_path = r'C:\Program Files\NCBI\blast-2.2.30+\bin'
-else:
-    blast_path = r'/usr/local/ncbi/blast/bin'
-if not os.path.exists(blast_path):
-    print('WARNING: BLAST path is not set correctly for this computer')
-    print('...BLAST path was set to:', blast_path)
-    print('...Aborting program. Please change "blast_path" and re-launch')
-    sys.exit()
-
 # get the two PAW results databases to blast against each other
 if os.path.exists(r'C:\Xcalibur\database'):
     default = r'C:\Xcalibur\database'
@@ -525,6 +553,14 @@ out_name = os.path.join(os.path.dirname(query),
                         os.path.basename(query)+'_vs_'+
                         os.path.basename(hit)+'.xml')
 out_name = out_name.replace('.fasta', '')
+
+# check if outfile path contains any spaces
+if " " in out_name:
+    print('\nWARNING: output path contains spaces in folder or file names')
+    print('...Remove or replaces spaces with "_" character and run again')
+    sys.exit()
+
+# see if an XML file already exists, if not run BLAST    
 if os.path.exists(out_name):
     print('BLAST XML results file exists, skipping BLAST run')
 else:
@@ -532,31 +568,8 @@ else:
     command = [os.path.join(blast_path, 'blastp'), '-query', query, \
                '-db', hit, '-evalue', '10.0', '-outfmt', '5', '-out', out_name]
     print('Command line:', ' '.join(command))
-##    blastp = subprocess.Popen(command,
-##                              stdin=subprocess.PIPE,
-##                              stdout=subprocess.PIPE,
-##                              stderr=subprocess.PIPE)
     blastp = subprocess.Popen(command)
     blastp.wait()
-    #
-    # close output streams
-    #
-##    blastp.stdin.close()
-##    blastp.stdout.close()
-##    blastp.stderr.close()
-###########################################################################    
-###
-### convert the temp.xml file to properly named file and strips bad chars
-###
-##temp_name = os.path.join(os.path.dirname(query), 'temp.xml')
-##os.rename(out_name, temp_name)
-##out_obj = open(out_name, 'w')
-##for line in open(temp_name, 'r'):
-##    line = line.rstrip()
-##    print >>out_obj, line.replace(chr(255), '*')
-##out_obj.close()
-##os.remove(temp_name)
-############################################################################
 
 # set up to parse the XML output.  Content handler holds the BLAST results
 print('Starting XML results file parsing (may take a few minutes)...')

@@ -1,4 +1,4 @@
-"""annotate_baboon.py - adds human ortholog annotations to UniProt baboon database.
+"""annotate_from_BLAST_map.py - adds "query" annotations to UniProt "hit" database.
 """
 
 import os
@@ -6,6 +6,7 @@ import sys
 import copy
 import fasta_lib
 
+# bit scores of 75-100 seem to be above random scores
 MIN_BIT = 100.0
 
 # get the two PAW results databases to blast against each other
