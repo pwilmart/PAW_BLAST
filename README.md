@@ -89,9 +89,9 @@ The reference database (the first database selected) is denoted as "query" and t
 
 - **ident:X/Y** => number of identical amino acids (X) out of the total query length (Y).
 - **pos:X/Y** => number of identical or similar amino acids, same definitions for X and Y.
-- **hit:** length (aa count) of hit sequence.
-- **align:** subset of hit that encompasses the alignment region (gaps, deletions, etc.).
-- **bit:** the BLAST bit score (sort of an information content score, better than e-value for small databases).
+- **hit:** => length (aa count) of hit sequence.
+- **align:** => subset of hit that encompasses the alignment region (gaps, deletions, etc.).
+- **bit:** => the BLAST bit score (an information content score, better than e-value for small databases).
 
 These individual scores are also written to separate columns now. This can make it easier to filter the match results.
 
