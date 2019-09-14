@@ -1,5 +1,5 @@
 # PAW_BLAST
-A utility for blasting one protein FASTA file (queries) against another (targets) to find orthologs (reciprocal best matches).
+A utility for blasting one protein FASTA file (queries) against another (hits) to find orthologs (reciprocal best matches).
 
 ## Change Log
 
