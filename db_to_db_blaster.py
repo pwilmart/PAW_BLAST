@@ -1,10 +1,10 @@
-"""Local BLAST program - launches local BLAST runs of small protein
-databases against other small databases.  Caputures XML output and
-parses the information.
+"""db_to_db_blaster.py -
+launches local BLAST runs of small protein databases against other
+small databases.  Caputures XML output and parses the information.
 
 MIT License
 
-Copyright (c) 2018 Phillip Wilmarth
+Copyright (c) 2019 Phillip Wilmarth, OHSU
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
