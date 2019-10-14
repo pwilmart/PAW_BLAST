@@ -25,7 +25,7 @@ Creating the query FASTA database is up to the user. The formats of lists of pro
 
 ## Requirements
 
-A local, stand-alone copy of NCBI BLAST program must be installed on the computer running `db_to_db_blaster.py`. The BLAST program is available for several platforms and downloadable installers are available [at this link](ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/).
+A local, stand-alone copy of NCBI BLAST program must be installed on the computer running `db_to_db_blaster.py`. The BLAST program is available for several platforms and downloadable installers are available [at this link](ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/LATEST/). Also [here](https://blast.ncbi.nlm.nih.gov/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download).
 
 There is a program variable called `blast_path` which needs to be set to the location where BLAST is installed on your computer. Check the source code for `blast_path` (it should be in a code block just after the `import` statements). The BLAST location depends on the computer platform. Change the appropriate path (Windows versus Mac/Linux) to match the location of BLAST on your computer.
 
