@@ -60,16 +60,21 @@ print('Processing accessions file:', time.ctime())
 IDs = {}
 read = 0
 for acc in open(list_file_name, 'r'):
+    # this assumes accessions from PAW pipeline results files
     try:
-        acc = acc.split()[0]    # remove additional match numbers
+        acc = acc.split()[0]    # split at whitespace to remove "additional match" numbers
     except IndexError:
         pass
+    
+    # could add a split on ";" for PD or MaxQuant where multiple accessions can be in one cell
+    # the design choice is to take first one only or all of them...
+    
     acc = acc.replace('_family', '')     # remove family designations
     if acc == '' or acc == 'Accession' or acc == 'Accessions' or acc.startswith('REV') or acc.startswith('('):
         print('...WARNING:', acc, 'was skipped')
-        continue
+        continue # skip possible header element and/or decoys
     read += 1
-    IDs[acc] = True    
+    IDs[acc] = True # load a dictionary keyed by accession   
 print('...there were %s protein accessions in file' % read)
 print('...there were %s unique protein accessions in file' % len(IDs))
 
@@ -83,14 +88,15 @@ contam = 1000
 subset_DB = open(os.path.join(results_location, subset_DB_name), 'w')
 
 """Results files may parse out a subset of the accession string so simple
-exact matching to protein database accessions may not work.
+exact matching to protein database accessions may not work. We use a slower
+'in' test that can match accession substrings to longer accessions.
 """
 # read proteins until EOF
 while f.readNextProtein(p):
     prot += 1
     for key in IDs:
         if key in p.accession: # this can have some unexpected, extra matches
-            if p.accession.startswith('CONT|') and KEEP_CONTAMS:
+            if p.accession.startswith('CONT|'): # make contaminant accession format consistent
                 contam += 1
                 new_cont = 'CONT_%04d|' % (contam,)
                 p.accession = p.accession.replace('CONT|', new_cont)
@@ -98,11 +104,14 @@ while f.readNextProtein(p):
             if p.accession.startswith('CONT_') and not KEEP_CONTAMS:
                 continue
             if IDs[key] == True:
+                # replace value in IDs dictionary with protein object
                 IDs[key] = [(prot, copy.deepcopy(p))]
             else:
+                # extra matches
                 IDs[key].append((prot, copy.deepcopy(p)))
 
 # we may have some contaminants in the imput list that we need to skip
+# these might not be in the selected FASTA file and would still have True values
 new_IDs = copy.deepcopy(IDs)
 for key in IDs:
     if IDs[key] == True:
@@ -119,7 +128,8 @@ out_list = []
 for key in new_IDs:
     for tup in new_IDs[key]:
         out_list.append(tup)
-for pout in [x[1] for x in sorted(out_list)]:
+
+for pout in [x[1] for x in sorted(out_list)]: # put matches in the same order as in the FASTA file
     pout.printProtein(subset_DB)
     sub_prot += 1
 

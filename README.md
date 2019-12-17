@@ -41,7 +41,7 @@ The scripts can be launched in a few ways. The program’s icon can be double cl
 - `db_to_db_blaster.py`
 - `annotate_from_BLAST-map.py`
 
-`make_subset_DB_from_list_3.py` - Helper script to make subset FASTA files, typically from [PAW pipeline](https://github.com/pwilmart/PAW_pipeline) results files. The input is a test file with one protein accession per line. Matching sequences from a selected FASTA file are collected and written to a new FASTA file. If the list of accessions has been parsed to simplify/shorten, then some modification of the code to find matching accessions in the FASTA file may be needed. This is a good reason not to alter accessions.
+`make_subset_DB_from_list_3.py` - Helper script to make subset FASTA files, typically from [PAW pipeline](https://github.com/pwilmart/PAW_pipeline) results files. The input is a plain text file with one protein accession per line. Matching sequences from a selected FASTA file are collected and written to a new FASTA file. If the list of accessions has been parsed to simplify/shorten, the script might work as expected. It tries to use an "in" test rather than an equality test for matching to (hopefully) include subset string matches. The results should be checked to see if some modification of the code to find matching accessions in the FASTA file may be needed. Clean subset string matching (not over-matching) can be tricky to achieve. This is a good reason not to alter accessions.
 
 `db_to_db_blaster.py` - This is the main script that creates BLAST format sequence sets, runs BLAST locally, parses the results to find the reciprocal best matches, and writes a tab-delimited text summary file. More details are in subsequent sections below.
 
