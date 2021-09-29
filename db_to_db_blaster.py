@@ -42,7 +42,7 @@ from xml.sax.handler import ContentHandler
 # test platform and set the BLAST program path #
 ################################################
 if platform.system() == 'Windows':
-    blast_path = r'C:\Program Files\NCBI\blast-2.9.0+\bin'
+    blast_path = r'C:\Program Files\NCBI\blast-2.11.0+\bin'
 else:
     blast_path = r'/usr/local/ncbi/blast/bin'
     
@@ -596,8 +596,16 @@ out = open(result_file, 'w')
 score = 'i'
 mean, stdev = results.calc_ave_match(score)
 cutoff = mean - 3*stdev
-if (mean-cutoff) > (0.9*mean):
-    cutoff = 0.9*mean
+
+#============
+print('mean:', mean, 'stdev:', stdev, 'cutoff:', cutoff)
+if cutoff < (0.5 * mean):
+    cutoff = 0.5 * mean     # make sure cutoff is not too small
+elif (mean-cutoff) > (0.8*mean):
+    cutoff = 0.8*mean       # make sure cutoff is not too close to mean
+print('final cutoff choice:', cutoff)
+#============
+
 results.test_top_hits(score, cutoff)
 total = results.print_top_hits_tabs(out)
 print('\n', total, 'proteins had no or poor matches', file=out)
