@@ -493,6 +493,56 @@ def better_match_check(results):
                 q.status = 'Better_match to %s' % best_score[h_acc][1]
         except IndexError:
             pass
+
+def validate_fasta_file(file):
+    valid = True
+    # if the file does not exist - bad user input
+    if not os.path.exists(file):
+        print(file, 'does not exist')
+        valid = False
+    # if the user specified a file with type other than fasta
+    elif not file.endswith('.fasta'):
+        print(os.path.basename(file), 'is not a fasta file')
+        valid = False
+
+    # if the file is not valid, print the command line usage and exit
+    if not valid:
+        print_cmd_file_args_usage()
+        sys.exit()
+
+def print_cmd_file_args_usage():
+    print('\n----')
+    print('usage : db_to_db_blaster.py [query_db.fasta hit_db.fasta]')
+
+def use_cmd_args_databases():
+    # first argument is the query database
+    first_db = sys.argv[1]
+    validate_fasta_file(first_db)
+    # second argument is hit database
+    second_db = sys.argv[2]
+    validate_fasta_file(second_db)
+
+    return (first_db, second_db)
+
+
+def select_databases_from_dialog():
+    # get the two PAW results databases to blast against each other
+    if os.path.exists(r'C:\Xcalibur\database'):
+        default = r'C:\Xcalibur\database'
+    else:
+        default = os.getcwd()
+
+    print('Select first FASTA file')
+    first_db = get_file(default, [('FASTA files', '*.fasta')],\
+                                    'Select first database')
+    if not first_db: sys.exit()     # cancel button was hit
+    default = os.path.dirname(first_db)
+    print('Select the second FASTA file')
+    second_db = get_file(default, [('FASTA files', '*.fasta')],\
+                                    'Select second database')
+    if not second_db: sys.exit()    # cancel button was hit
+
+    return (first_db, second_db)
        
 #==============================================================        
 # MAIN program to call local copy of blastp
@@ -506,21 +556,12 @@ print('\n=====================================================================')
 print(' program "db_to_db_blaster.py", v1.1, Phil Wilmarth, OHSU, 2011, 2017')
 print('=====================================================================')
 
-# get the two PAW results databases to blast against each other
-if os.path.exists(r'C:\Xcalibur\database'):
-    default = r'C:\Xcalibur\database'
+# if query and hit databases have been specified as cmd args
+if 3 == len(sys.argv):
+    first_db, second_db = use_cmd_args_databases()
+# otherwise, prompt the user for files using the dialog
 else:
-    default = os.getcwd()
-
-print('Select first FASTA file')
-first_db = get_file(default, [('FASTA files', '*.fasta')],\
-                                'Select first database')
-if not first_db: sys.exit()     # cancel button was hit
-default = os.path.dirname(first_db)
-print('Select the second FASTA file')
-second_db = get_file(default, [('FASTA files', '*.fasta')],\
-                                'Select second database')
-if not second_db: sys.exit()    # cancel button was hit
+    first_db, second_db = select_databases_from_dialog()
 
 # echo database names to console output
 print('Query database:', os.path.basename(first_db))
