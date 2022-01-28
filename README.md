@@ -68,7 +68,7 @@ Several lines of status information will be written to the console during progra
 After program has finished the results files will be located in the same folder as the first database. The results files will be two files with “.xml” and “.txt” extensions. The filename will be a combination of the query and hit database names. The XML file is the full results from the BLAST run, including alignments and all hits per query. The TXT file is a tab-delimited summary of the top matches that shows query protein accession and description, top-matching hit accession and description, BLAST scores, and status information.
 
 ### Command Line Arguments
-* For developer/scripting use *
+_For developer/scripting use_
 
 `db_to_db_blaster.py` accepts two optional command line arguments specifying fasta files to use. If fasta files are specified in the command line, user is not prompted to select files via the file dialog. 
 
