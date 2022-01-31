@@ -3,7 +3,7 @@ A utility for blasting one protein FASTA file (queries) against another (hits) t
 
 ## Change Log
 
-#### 20220131 - FATA files can be passed via the command line.
+#### 20220131 - FASTA files can be passed via the command line.
 
 The query and hit FASTA files can be passed in via command line. If there are no command arguments (or program is run interactively), the user needs to browse to the two FASTA files. Also, some improvements to the identity score cutoff for OK match calls.
 
