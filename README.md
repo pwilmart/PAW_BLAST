@@ -3,6 +3,10 @@ A utility for blasting one protein FASTA file (queries) against another (hits) t
 
 ## Change Log
 
+#### 20220131 - FATA files can be passed via the command line.
+
+The query and hit FASTA files can be passed in via command line. If there are no command arguments (or program is run interactively), the user needs to browse to the two FASTA files. Also, some improvements to the identity score cutoff for OK match calls.
+
 #### 20190619 - Minor update added some additional columns to the output table.
 
 Added more columns with BLAST data so that more extensive table filtering can be done. This can be useful when trying to add as many ortholog annotations as possible. Adding annotations to FASTA files in one of the more common uses of this utility.
