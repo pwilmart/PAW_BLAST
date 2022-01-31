@@ -28,6 +28,7 @@ Written by Phil Wilmarth, OHSU, 2009-2022.
 
 change log:
 20190913 - moved BLAST path tests to top of source -PW
+20211230 - changed calculation of identity cutoff value -PW
 20220131 - FASTA files can be passed in via command line -PW
 """
 import os
