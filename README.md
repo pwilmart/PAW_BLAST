@@ -56,7 +56,6 @@ The scripts can be launched in a few ways. The program’s icon can be double cl
 Program logic is simple. It takes every sequence in the first database (called the query database) and performs BLAST alignments to all proteins in a second database (called the hit database). The databases should be protein sequences in FASTA format. The databases will be converted to BLAST formatted files (3 files with extensions of “.phr”, “.pin”, and “.psq”). If those files exist, the database conversion is skipped to save time. Be warned that BLAST may not like valid FASTA characters such as stop codons (*) or gaps (-) and input databases may need to be processed to remove such characters. The BLAST run is saved in a (large) XML file and may take several hours to complete. If the XML file already exists, the BLAST run is skipped. If the BLAST run needs to be repeated make sure the XML file is deleted before running `db_to_db_blaster.py`. After the BLAST run has finished, the XML file is parsed and the top-matching hit protein for each query protein is reported in a tab-delimited text file that can be opened with Excel or any text editor. Details about the output file contents are given below.
 
 ## Program Execution
-`db_to_db_blaster.py` can be run interactively or launched via the command line (execute the Python interpreter and pass in the script name along with any command line arguments). The script needs the query FASTA file and the hit FASTA file. These can be interactively selected with the standard file browser (if running the script interactively or if script is launched from the command line without any arguments). If the two FASTA files are passed in via the command line (query FASTA file path first, hit FASTA file path second), then the file dialog steps are skipped.
 
 When the program starts, a dialog box will ask the user to browse to the first (query) database file:
 
@@ -71,6 +70,16 @@ Several lines of status information will be written to the console during progra
 ![console output](images/console.png)
 
 After program has finished the results files will be located in the same folder as the first database. The results files will be two files with “.xml” and “.txt” extensions. The filename will be a combination of the query and hit database names. The XML file is the full results from the BLAST run, including alignments and all hits per query. The TXT file is a tab-delimited summary of the top matches that shows query protein accession and description, top-matching hit accession and description, BLAST scores, and status information.
+
+### Command Line Arguments
+_For developer/scripting use_
+
+`db_to_db_blaster.py` accepts two optional command line arguments specifying fasta files to use. If fasta files are specified in the command line, user is not prompted to select files via the file dialog. 
+
+**Usage**
+```python
+usage : db_to_db_blaster.py [query_db.fasta hit_db.fasta]
+```
 
 ## Database Definitions
 
