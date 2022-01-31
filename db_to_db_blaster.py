@@ -24,10 +24,11 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-Written by Phil Wilmarth, OHSU, 2009-2016.
+Written by Phil Wilmarth, OHSU, 2009-2022.
 
 change log:
 20190913 - moved BLAST path tests to top of source -PW
+20220131 - FASTA files can be passed in via command line -PW
 """
 import os
 import sys
@@ -38,19 +39,6 @@ import subprocess
 import xml.sax
 from xml.sax.handler import ContentHandler
 
-################################################
-# test platform and set the BLAST program path #
-################################################
-if platform.system() == 'Windows':
-    blast_path = r'C:\Program Files\NCBI\blast-2.11.0+\bin'
-else:
-    blast_path = r'/usr/local/ncbi/blast/bin'
-    
-if not os.path.exists(blast_path):
-    print('\nWARNING: BLAST path is not set correctly for this computer')
-    print('...BLAST path was set to:', blast_path)
-    print('...Aborting program. Please change "blast_path" and re-launch')
-    sys.exit()
 
 def get_file(default_location, extension_list, title_string=""):
     """Dialog box to browse to a file.  Returns full file name.
@@ -494,166 +482,3 @@ def better_match_check(results):
         except IndexError:
             pass
 
-def validate_fasta_file(file):
-    valid = True
-    # if the file does not exist - bad user input
-    if not os.path.exists(file):
-        print(file, 'does not exist')
-        valid = False
-    # if the user specified a file with type other than fasta
-    elif not file.endswith('.fasta'):
-        print(os.path.basename(file), 'is not a fasta file')
-        valid = False
-
-    # if the file is not valid, print the command line usage and exit
-    if not valid:
-        print_cmd_file_args_usage()
-        sys.exit()
-
-def print_cmd_file_args_usage():
-    print('\n----')
-    print('usage : db_to_db_blaster.py [query_db.fasta hit_db.fasta]')
-
-def use_cmd_args_databases():
-    # first argument is the query database
-    first_db = sys.argv[1]
-    validate_fasta_file(first_db)
-    # second argument is hit database
-    second_db = sys.argv[2]
-    validate_fasta_file(second_db)
-
-    return (first_db, second_db)
-
-
-def select_databases_from_dialog():
-    # get the two PAW results databases to blast against each other
-    if os.path.exists(r'C:\Xcalibur\database'):
-        default = r'C:\Xcalibur\database'
-    else:
-        default = os.getcwd()
-
-    print('Select first FASTA file')
-    first_db = get_file(default, [('FASTA files', '*.fasta')],\
-                                    'Select first database')
-    if not first_db: sys.exit()     # cancel button was hit
-    default = os.path.dirname(first_db)
-    print('Select the second FASTA file')
-    second_db = get_file(default, [('FASTA files', '*.fasta')],\
-                                    'Select second database')
-    if not second_db: sys.exit()    # cancel button was hit
-
-    return (first_db, second_db)
-       
-#==============================================================        
-# MAIN program to call local copy of blastp
-# user supplies a local BLAST database path and
-# a query sequence in FASTA format (supplied via stdin stream).
-# XML output is captured, parsed, and saved in content handler.
-#==============================================================        
-
-# print program information
-print('\n=====================================================================')
-print(' program "db_to_db_blaster.py", v1.1, Phil Wilmarth, OHSU, 2011, 2017')
-print('=====================================================================')
-
-# if query and hit databases have been specified as cmd args
-if 3 == len(sys.argv):
-    first_db, second_db = use_cmd_args_databases()
-# otherwise, prompt the user for files using the dialog
-else:
-    first_db, second_db = select_databases_from_dialog()
-
-# echo database names to console output
-print('Query database:', os.path.basename(first_db))
-print('Hit database:', os.path.basename(second_db))
-print('Results files will be in:', os.path.dirname(first_db))
-
-# create a data structure to hold the results
-results = Blast_results()
-
-# make the BLAST databases if they don't exist
-for db in [first_db, second_db]:
-    make_db = False
-    for ext in ['.phr', '.pin', '.psq']:
-        if not os.path.exists(db+ext):
-            make_db = True
-    if make_db:
-        command = [os.path.join(blast_path, 'makeblastdb'),
-                   '-in', db, '-dbtype', 'prot']
-        print('Command line:', command)
-        p = subprocess.call(command)
-        print('Formatting %s as BLAST database' % (os.path.basename(db),))
-
-# launch the local BLAST run
-i = 0
-query = first_db
-hit = second_db
-
-# make the Blast command line and launch subprocess
-out_name = os.path.join(os.path.dirname(query),
-                        os.path.basename(query)+'_vs_'+
-                        os.path.basename(hit)+'.xml')
-out_name = out_name.replace('.fasta', '')
-
-# check if outfile path contains any spaces
-if " " in out_name:
-    print('\nWARNING: output path contains spaces in folder or file names')
-    print('...Remove or replaces spaces with "_" character and run again')
-    sys.exit()
-
-# see if an XML file already exists, if not run BLAST    
-if os.path.exists(out_name):
-    print('BLAST XML results file exists, skipping BLAST run')
-else:
-    print('Starting local BLAST run (may take some time)...')
-    command = [os.path.join(blast_path, 'blastp'), '-query', query, \
-               '-db', hit, '-evalue', '10.0', '-outfmt', '5', '-out', out_name]
-    print('Command line:', ' '.join(command))
-    blastp = subprocess.Popen(command)
-    blastp.wait()
-
-# set up to parse the XML output.  Content handler holds the BLAST results
-print('Starting XML results file parsing (may take a few minutes)...')
-out_obj = open(out_name, 'r')
-ch = SimpleHandler()
-ch.header.query_db = query
-ch.header.hit_db = hit
-saxparser = xml.sax.make_parser()
-saxparser.setContentHandler(ch)
-saxparser.setFeature(xml.sax.handler.feature_validation, 0)
-saxparser.setFeature(xml.sax.handler.feature_namespaces, 0)
-saxparser.setFeature(xml.sax.handler.feature_external_pes, 0)
-saxparser.setFeature(xml.sax.handler.feature_external_ges, 0)
-saxparser.parse(out_name)
-
-# save the results before the next iteration
-results.header = copy.deepcopy(ch.header)
-results.queries = copy.deepcopy(ch.queries)
-better_match_check(results)
-
-# do something with the results next
-result_file = out_name.replace('.xml', '.txt')
-out = open(result_file, 'w')
-score = 'i'
-mean, stdev = results.calc_ave_match(score)
-cutoff = mean - 3*stdev
-
-#============
-print('mean:', mean, 'stdev:', stdev, 'cutoff:', cutoff)
-if cutoff < (0.5 * mean):
-    cutoff = 0.5 * mean     # make sure cutoff is not too small
-elif (mean-cutoff) > (0.8*mean):
-    cutoff = 0.8*mean       # make sure cutoff is not too close to mean
-print('final cutoff choice:', cutoff)
-#============
-
-results.test_top_hits(score, cutoff)
-total = results.print_top_hits_tabs(out)
-print('\n', total, 'proteins had no or poor matches', file=out)
-print('Identity scores had a mean of %0.2f%% (%0.2f%%)' % (mean, stdev), file=out)
-print('Identity cutoff for OK was %0.2f%%' % cutoff, file=out)
-print(len(results.queries), 'proteins processed.', file=out)
-out.close()
-print(len(results.queries), 'proteins processed.')
-
-# end
