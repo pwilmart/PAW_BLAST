@@ -58,6 +58,12 @@ Program logic is simple. It takes every sequence in the first database (called t
 ## Program Execution
 `db_to_db_blaster.py` can be run interactively or launched via the command line (execute the Python interpreter and pass in the script name along with any command line arguments). The script needs the query FASTA file and the hit FASTA file. These can be interactively selected with the standard file browser (if running the script interactively or if script is launched from the command line without any arguments). If the two FASTA files are passed in via the command line (query FASTA file path first, hit FASTA file path second), then the file dialog steps are skipped.
 
+### Command line Execution
+
+usage : `db_to_db_blaster.py [query_db.fasta hit_db.fasta]`
+
+### Interactive Use (or no command line arguments passed)
+
 When the program starts, a dialog box will ask the user to browse to the first (query) database file:
 
 ![first FASTA](images/first_FASTA.png)
